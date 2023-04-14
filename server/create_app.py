@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 
-from server.api.auth.views import auth_router
-from server.api.sockets import sio_app
-
+from chat.chat import chat_router
 
 app = FastAPI(
     title="Simple social network",
@@ -10,6 +8,5 @@ app = FastAPI(
 
 
 def create_app() -> FastAPI:
-    app.include_router(auth_router)
-    app.mount("/", app=sio_app)
+    app.include_router(chat_router)
     return app

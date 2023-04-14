@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from uvicorn import run
 
-from .create_app import create_app
+from create_app import create_app
 
 arg_parser = ArgumentParser(description="Args with custom host and port settings.")
 arg_parser.add_argument("--host", dest="host", default="0.0.0.0")
