@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ChatApp</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .card {
+            position: absolute;
+            width: 95%;
+            height: 80%;
+            box-shadow: 0px 0px 5px gray;
+            left: 2.5%;
+            top: 5%;
+        }
+
+        #chat-form {
+            position: absolute;
+            top: 90%;
+            transform: translateY(-90%);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #nickname-div {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-90%);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #messages {
+            padding-bottom: 10%;
+            padding-left: 20px;
+            padding-top: 20px;
+            max-height: 80%;
+            overflow: auto;
+        }
+
+        #chat-form input {
+            width: 400px;
+            padding-right: 20%;
+        }
+
+        #chat-form button {
+            position: absolute;
+            left: 85%;
+        }
+
+        #nickname-form input {
+            width: 400px;
+            padding-right: 20%;
+        }
+
+        #profile {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+    </style>
+    <script>
+        const client_id = Date.now();
+
+        var nicknameForm = document.getElementById('nickname-form');
+        nicknameForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            onStart();
+        });
+
+        function onStart() {
+            document.getElementById('nickname-div').hidden = true;
+            document.getElementById("messageDiv").hidden = false;
+
+            var nickname = document.getElementById("nicknameText").value
+            document.getElementById("profile").textContent = nickname;
+
+            var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
+
+            user = {
+                "client_id": client_id,
+                "nickname": nickname,
+                "message": null,
+                "picture": null
+            }
+
+            ws.onopen = () => ws.send(JSON.stringify(user))
+
+            var msgForm = document.getElementById("messageForm")
+            msgForm.addEventListener('submit', sendMessage)
+
+            class Transport {
+                constructor(
+                    message_type,
+                    client_id,
+                    nickname,
+                    message,
+                    picture
+                ) {
+                    this.message_type = message_type;
+                    this.client_id = client_id;
+                    this.nickname = nickname;
+                    this.message = message;
+                    this.picture = picture;
+                }
+
+                static fromJSON(json) {
+                    return Object.assign(new Student(), json);
+                }
+            }
+
+            socket.onmessage = function (event) {
+                var parent = document.getElementById("messages");
+                var data = JSON.parse(event.data);
+                var sender = data['nickname'];
+                if (sender == nickname)
+                    sender = "You";
+                var message = data['message']
+                var content = "<p><strong>" + sender + " </strong> <span> " + message + "</span></p>";
+                parent.append(content);
+            };
+
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+                event.stopPropagation();
+            };
+        };
+    </script>
+</head>
+
+<body>
+    <div class="chat-body card">
+        <div class="card-body">
+            <strong id="profile"></strong>
+            <h4 class="card-title text-center"> Chat App </h4>
+            <hr>
+            <div id="nickname-div">
+                <h4 lass="card-title text-center">Your Nickname:</h4>
+                <form action="" id="nickname-form" class="form-inline">
+                    <input type="text" class="form-control" id="nicknameText" autocomplete="off" />
+                    <button class="btn btn-primary">Set nickname and connect</button>
+                </form>
+            </div>
+            <div>
+                <div id="messages">
+                </div>
+                <form class="form-inline" id="chat-form">
+                    <input type="text" class="form-control" placeholder="Write your message">
+                    <button id="send" type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

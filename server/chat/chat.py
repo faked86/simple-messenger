@@ -22,6 +22,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast(f"Client #{client_id} says: {data}")
+            await manager.broadcast(data)
     except WebSocketDisconnect:
         await manager.disconnect(client_id)

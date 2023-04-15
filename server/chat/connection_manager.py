@@ -1,3 +1,5 @@
+import json
+
 from fastapi import WebSocket
 
 
@@ -8,11 +10,23 @@ class ConnectionManager:
     async def connect(self, client_id: int, websocket: WebSocket):
         await websocket.accept()
         self.active_connections[client_id] = websocket
-        await self.broadcast(f"Client #{client_id} enter the chat")
+        data = {
+            "client_id": client_id,
+            "nickname": "nickname",
+            "message": "enter the chat",
+            "picture": None
+        }
+        await self.broadcast(json.dumps(data))
 
     async def disconnect(self, client_id: int):
         self.active_connections.pop(client_id)
-        await self.broadcast(f"Client #{client_id} left the chat")
+        data = {
+            "client_id": client_id,
+            "nickname": "nickname",
+            "message": "left the chat",
+            "picture": None
+        }
+        await self.broadcast(json.dumps(data))
 
     async def send_personal_message(self, client_id: int, message: str):
         websocket = self.active_connections[client_id]
