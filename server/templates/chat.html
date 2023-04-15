@@ -8,44 +8,90 @@
 <body>
     <h1>WebSocket Chat</h1>
     <div>
-        <h2>Your ID: <span id="ws-id"></span></h2>
         <h2>Your Nickname: <span id="ws-nickname"></span></h2>
-        <form action="" onsubmit="setNickname(event)">
+        <form action="" id="nicknameSetter">
             <input type="text" id="nicknameText" autocomplete="off" />
-            <button>Set</button>
+            <button>Set nickname and connect</button>
         </form>
     </div>
-    <form action="" onsubmit="sendMessage(event)">
-        <input type="text" id="messageText" autocomplete="off" />
-        <button>Send</button>
-    </form>
-    <ul id='messages'>
-    </ul>
+
+    <div id="app">
+    </div>
+
+    <div id="messageDiv" hidden>
+        <form action="" id="messageForm">
+            <input type="text" id="messageText" autocomplete="off" />
+            <button>Send</button>
+        </form>
+        <ul id='messages'>
+        </ul>
+    </div>
+
     <script>
-        var client_id = Date.now()
-        document.querySelector("#ws-id").textContent = client_id;
-        var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
 
-        ws.onmessage = function (event) {
-            var messages = document.getElementById('messages')
-            var message = document.createElement('li')
-            var content = document.createTextNode(event.data)
-            message.appendChild(content)
-            messages.appendChild(message)
-        };
+        const app = document.querySelector('#app');
 
-        function sendMessage(event) {
-            var input = document.getElementById("messageText")
-            ws.send(input.value)
-            input.value = ''
-            event.preventDefault()
-        };
+        var client_id = Date.now();
 
-        function setNickname(event) {
-            var input = document.getElementById("nicknameText")
-            document.querySelector("#ws-nickname").textContent = input.value
-            event.preventDefault()
-        };
+        app.innerHTML = 'Waiting';
+
+        const start = document.getElementById('nicknameSetter');
+
+        const promise = new Promise((resolve, reject) => {
+            start.addEventListener('submit', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                resolve(e);
+            })
+        })
+
+        function onStart() {
+            app.innerHTML = `Ready!`;
+
+            start.hidden = true;
+            document.getElementById("messageDiv").hidden = false;
+
+            var nickname = document.getElementById("nicknameText").value
+            document.querySelector("#ws-nickname").textContent = nickname;
+
+            var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
+
+            user = {
+                "nickname": nickname,
+                "client_id": client_id
+            }
+            ws.onopen = () => ws.send(JSON.stringify(user))
+
+            var msgForm = document.getElementById("messageForm")
+            msgForm.addEventListener('submit', sendMessage)
+
+            ws.onmessage = function (event) {
+                var messages = document.getElementById('messages')
+                var message = document.createElement('li')
+                var content = document.createTextNode(event.data)
+                message.appendChild(content)
+                messages.appendChild(message)
+            };
+
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+                event.stopPropagation();
+            };
+        }
+
+        async function waitClick() {
+            return await promise
+                .then((ev) => {
+                    onStart()
+                    window.console.log(ev)
+                })
+        }
+
+        waitClick();
+
     </script>
 </body>
 
