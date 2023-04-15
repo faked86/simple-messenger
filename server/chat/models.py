@@ -24,6 +24,10 @@ class Transport(BaseModel):
     picture: bytes
 
 
+class ConnectionTransport(BaseModel):
+    nickname: str
+
+
 if __name__ == "__main__":
     usr = {
         "client_id": 1,

@@ -8,7 +8,7 @@ chat_router = APIRouter()
 
 manager = ConnectionManager()
 
-templates = Jinja2Templates(directory="server/templates")
+templates = Jinja2Templates(directory="templates")
 
 
 @chat_router.get("/")
