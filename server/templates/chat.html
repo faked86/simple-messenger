@@ -14,14 +14,19 @@
             box-shadow: 0px 0px 5px gray;
             left: 2.5%;
             top: 5%;
+            background-color: #a2bbc5;
+        }
+
+        #box {
+            height: 100%;
+            display: flex;
         }
 
         #chat-form {
-            position: absolute;
-            top: 90%;
-            transform: translateY(-90%);
-            left: 50%;
-            transform: translateX(-50%);
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
         }
 
         #nickname-div {
@@ -32,22 +37,46 @@
             transform: translateX(-50%);
         }
 
-        #messages {
+        #premessages-div {
             padding-bottom: 10%;
             padding-left: 20px;
             padding-top: 20px;
             max-height: 80%;
+            width: 70%;
+            height: 100%;
+        }
+
+        #messages-div {
+            height: 200%;
+            max-height: 200%;
             overflow: auto;
         }
 
-        #chat-form input {
-            width: 400px;
-            padding-right: 20%;
+        #chatters-div {
+            padding: 0.5em;
+            border-radius: 1em;
+            margin: 0.5em;
+            height: 90%;
+            background-color: white;
+            overflow: auto;
+            width: 30%;
         }
 
-        #chat-form button {
-            position: absolute;
-            left: 85%;
+        .notification {
+            padding: 0.5em;
+            border-radius: 1em;
+            margin: 0.5em;
+            line-height: 1.1em;
+            background-color: rgb(107, 28, 28);
+            color: wheat;
+        }
+
+        .message {
+            padding: 0.5em;
+            border-radius: 1em;
+            margin: 0.5em;
+            line-height: 1.1em;
+            background-color: white;
         }
 
         #nickname-form input {
@@ -76,14 +105,17 @@
                     <button class="btn btn-primary">Set</button>
                 </form>
             </div>
-            <div id="message-div" hidden>
-                <div id="messages">
+            <div id="box" hidden>
+                <div id="premessages-div">
+                    <div id="messages-div">
+                    </div>
+                    <form class="form-inline" id="chat-form">
+                        <input type="text" id="chat-text" class="form-control" autocomplete="off"
+                            placeholder="Write your message">
+                        <button id="send" type="submit" class="btn btn-primary">Send</button>
+                    </form>
                 </div>
-                <form class="form-inline" id="chat-form">
-                    <input type="text" id="chat-text" class="form-control" autocomplete="off"
-                        placeholder="Write your message">
-                    <button id="send" type="submit" class="btn btn-primary">Send</button>
-                </form>
+                <div id="chatters-div">priv</div>
             </div>
         </div>
     </div>
@@ -105,7 +137,7 @@
         const client_id = Date.now();
 
         document.getElementById('nickname-div').hidden = true;
-        document.getElementById("message-div").hidden = false;
+        document.getElementById('box').hidden = false;
 
         document.getElementById("profile").textContent = nickname;
 
@@ -141,16 +173,35 @@
             }
         };
 
+        function renderNotification(text) {
+            let messagesDiv = document.getElementById("messages-div");
+            let notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerText = text;
+            messagesDiv.append(notification);
+            messagesDiv.scrollTo(0, messagesDiv.scrollHeight);
+        }
+
+        function renderText(text) {
+            let messagesDiv = document.getElementById("messages-div");
+            let msg = document.createElement('div');
+            msg.className = 'message';
+            msg.innerText = text;
+            messagesDiv.append(msg);
+            messagesDiv.scrollTo(0, messagesDiv.scrollHeight);
+        }
+
         ws.onmessage = function (event) {
-            var parent = document.getElementById("messages");
             console.log(event.data)
+
             var data = JSON.parse(event.data);
             var sender = data['nickname'];
             if (sender == nickname)
                 sender = "You";
             var message = data['message'];
-            var content = "<p><strong>" + sender + " </strong> <span> " + message + "</span></p>";
-            parent.innerHTML = parent.innerHTML + content;
+
+            renderNotification(sender + ":")
+            renderText(message)
         };
     };
 </script>

@@ -10,12 +10,8 @@ class ConnectionManager:
     async def connect(self, client_id: int, websocket: WebSocket):
         await websocket.accept()
         self.active_connections[client_id] = websocket
-        data = {
-            "client_id": client_id,
-            "nickname": "nickname",
-            "message": "enter the chat",
-            "picture": None
-        }
+
+        data = await websocket.receive_json()
         await self.broadcast(json.dumps(data))
 
     async def disconnect(self, client_id: int):
