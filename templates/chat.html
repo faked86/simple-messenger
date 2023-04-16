@@ -126,7 +126,7 @@
 
             if (transport.message_type === "MESSAGE") {
                 if (last_sender !== transport.nickname) {
-                    renderNotification(transport.nickname + ":");
+                    renderNotification(transport.nickname + ":", "new_message");
                 };
                 renderText(transport.text);
                 last_sender = transport.nickname;
@@ -134,14 +134,14 @@
             }
 
             if (transport.message_type === "CONNECT") {
-                renderNotification(transport.nickname + " connected!");
+                renderNotification(transport.nickname + " connected!", "connected");
                 chatters.add(transport.nickname);
                 renderChatters();
                 return
             }
 
             if (transport.message_type === "DISCONNECT") {
-                renderNotification(transport.nickname + " disconnected!");
+                renderNotification(transport.nickname + " disconnected!", "disconnected");
                 chatters.delete(transport.nickname);
                 renderChatters();
                 return
@@ -174,7 +174,7 @@
             if (text) {
                 sendMessage(text);
                 if (last_sender !== true) {
-                    renderNotification("You said:");
+                    renderNotification("You said:", "self_message");
                 };
                 last_sender = true;
                 renderText(text);
@@ -188,10 +188,10 @@
         };
     };
 
-    function renderNotification(text) {
+    function renderNotification(text, type) {
         let messagesDiv = document.getElementById("messages-div");
         let notification = document.createElement('div');
-        notification.className = 'notification';
+        notification.className = type;
         notification.innerText = text;
         messagesDiv.append(notification);
         messagesDiv.scrollTo(0, messagesDiv.scrollHeight);

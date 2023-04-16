@@ -67,6 +67,42 @@
     color: wheat;
 }
 
+.new_message {
+    padding: 0.5em;
+    border-radius: 1em;
+    margin: 0.5em;
+    line-height: 1.1em;
+    background-color: rgb(33, 100, 121);
+    color: white;
+}
+
+.connected {
+    padding: 0.5em;
+    border-radius: 1em;
+    margin: 0.5em;
+    line-height: 1.1em;
+    background-color: rgb(54, 139, 27);
+    color: white;
+}
+
+.disconnected {
+    padding: 0.5em;
+    border-radius: 1em;
+    margin: 0.5em;
+    line-height: 1.1em;
+    background-color: rgb(107, 28, 28);
+    color: white;
+}
+
+.self_message {
+    padding: 0.5em;
+    border-radius: 1em;
+    margin: 0.5em;
+    line-height: 1.1em;
+    background-color: rgb(64, 54, 207);
+    color: white;
+}
+
 .message {
     padding: 0.5em;
     border-radius: 1em;
