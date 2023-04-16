@@ -1,33 +1,55 @@
-import json
-
 from fastapi import WebSocket
+from loguru import logger
+from pydantic import ValidationError
+
+from chat.models import ConnectionTransport, MessageType, Transport
 
 
 class ConnectionManager:
     def __init__(self) -> None:
-        self.active_connections: dict[int, WebSocket] = {}
+        self.active_connections: dict[str, WebSocket] = {}
 
-    async def connect(self, client_id: int, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> str:
         await websocket.accept()
-        self.active_connections[client_id] = websocket
 
         data = await websocket.receive_json()
-        await self.broadcast(json.dumps(data))
+        try:
+            conn_transport = ConnectionTransport.parse_obj(data)
+        except ValidationError as err:
+            logger.exception(err)
+            await websocket.close(4001, "Validation error")
+            return ""
 
-    async def disconnect(self, client_id: int):
-        self.active_connections.pop(client_id)
-        data = {
-            "client_id": client_id,
-            "nickname": "nickname",
-            "message": "left the chat",
-            "picture": None
-        }
-        await self.broadcast(json.dumps(data))
+        nickname = conn_transport.nickname
 
-    async def send_personal_message(self, client_id: int, message: str):
-        websocket = self.active_connections[client_id]
-        await websocket.send_text(message)
+        if nickname in self.active_connections:
+            await websocket.close(4002, "Nickname already taken")
+            return nickname
+        
+        chatters_list = list(self.active_connections.keys())
+        transport = Transport(message_type=MessageType.CONNECTED, chatters=chatters_list)
+        await websocket.send_text(transport.json())
 
-    async def broadcast(self, message: str):
+        self.active_connections[nickname] = websocket
+
+        transport = Transport(message_type=MessageType.CONNECT, nickname=nickname)
+        await self.broadcast_except_sender(nickname, transport)
+
+        return nickname
+
+    async def disconnect(self, nickname: str):
+        self.active_connections.pop(nickname)
+        data = Transport(message_type=MessageType.DISCONNECT, nickname=nickname)
+        await self.broadcast(data)
+
+    async def personal_message(self, nickname: str, transport: Transport):
+        await self.active_connections[nickname].send_text(transport.json())
+
+    async def broadcast(self, transport: Transport):
         for connection in self.active_connections.values():
-            await connection.send_text(message)
+            await connection.send_text(transport.json())
+
+    async def broadcast_except_sender(self, nickname: str, transport: Transport):
+        for nick, connection in self.active_connections.items():
+            if nick != nickname:
+                await connection.send_text(transport.json())

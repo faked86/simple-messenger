@@ -45,69 +45,147 @@
 </body>
 
 <script>
-    const client_id = Date.now();
+    class Transport {
+        constructor(
+            message_type,
+            nickname,
+            text,
+            picture,
+            chatters
+        ) {
+            this.message_type = message_type;
+            this.nickname = nickname;
+            this.text = text;
+            this.picture = picture;
+            this.chatters = chatters;
+        }
+
+        static validate(json) {
+            var obj = JSON.parse(json);
+
+            if (!("nickname" in obj)) {
+                obj["nickname"] = null;
+            };
+            if (!("text" in obj)) {
+                obj["text"] = null;
+            };
+            if (!("picture" in obj)) {
+                obj["picture"] = null;
+            };
+            if (!("chatters" in obj)) {
+                obj["chatters"] = null;
+            };
+
+            return new Transport(
+                obj["message_type"],
+                obj["nickname"],
+                obj["text"],
+                obj["picture"],
+                obj["chatters"]
+            )
+        }
+    };
+
     var nickname = "";
-    var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
+    var chatters = new Set();
+    var last_sender = false;
 
     var nicknameForm = document.getElementById('nickname-form');
     nicknameForm.addEventListener('submit', function (e) {
         e.preventDefault();
         e.stopPropagation();
-
         nickname = document.getElementById("nickname-text").value;
         if (nickname) {
-            onStart();
+            main();
         }
     });
 
-    function onStart() {
-        document.getElementById('nickname-div').hidden = true;
-        document.getElementById('box').hidden = false;
+    function main() {
+        var ws = new WebSocket(`ws://localhost:8000/ws`);
 
-        document.getElementById("profile").textContent = nickname;
-
-        data = {
-            "client_id": client_id,
-            "nickname": nickname,
-            "message": null,
-            "picture": null
-        };
-        ws.send(JSON.stringify(data));
-
-        var chatForm = document.getElementById("chat-form");
-        chatForm.addEventListener('submit', sendMessage);
-    };
-
-    ws.onmessage = function (event) {
-        console.log(event.data)
-
-        var data = JSON.parse(event.data);
-        var sender = data['nickname'];
-        if (sender == nickname)
-            sender = "You";
-        var message = data['message'];
-
-        renderNotification(sender + ":")
-        renderText(message)
-    };
-
-    function sendMessage(event) {
-        event.preventDefault()
-        event.stopPropagation();
-
-        var input = document.getElementById("chat-text")
-        var message = input.value
-        if (message) {
-            input.value = ''
+        ws.onopen = function (event) {
             data = {
-                "client_id": client_id,
                 "nickname": nickname,
-                "message": message,
-                "picture": null
             };
-            console.log(data)
-            ws.send(JSON.stringify(data))
+            console.log(JSON.stringify(data))
+            ws.send(JSON.stringify(data));
         }
+
+        ws.onmessage = function (event) {
+            console.log(event.data)
+
+            var transport = Transport.validate(event.data);
+            console.log(transport)
+
+            if (transport.message_type === "CONNECTED") {
+                chatters = new Set(transport.chatters);
+                renderChatters();
+                onStart();
+                return
+            }
+
+            if (transport.message_type === "MESSAGE") {
+                if (last_sender !== transport.nickname) {
+                    renderNotification(transport.nickname + ":");
+                };
+                renderText(transport.text);
+                last_sender = transport.nickname;
+                return
+            }
+
+            if (transport.message_type === "CONNECT") {
+                renderNotification(transport.nickname + " connected!");
+                chatters.add(transport.nickname);
+                renderChatters();
+                return
+            }
+
+            if (transport.message_type === "DISCONNECT") {
+                renderNotification(transport.nickname + " disconnected!");
+                chatters.delete(transport.nickname);
+                renderChatters();
+                return
+            }
+        };
+
+        ws.onclose = function (event) {
+            console.log(event.code, event.reason)
+            alert(event.reason)
+        };
+
+        function onStart() {
+            document.getElementById('nickname-div').hidden = true;
+            document.getElementById('box').hidden = false;
+
+            document.getElementById("profile").textContent = nickname;
+
+            var chatForm = document.getElementById("chat-form");
+            chatForm.addEventListener('submit', chatFormHandler);
+        };
+
+        function chatFormHandler(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var input = document.getElementById("chat-text");
+            var text = input.value;
+            input.value = '';
+
+            if (text) {
+                sendMessage(text);
+                if (last_sender !== true) {
+                    renderNotification("You said:");
+                };
+                last_sender = true;
+                renderText(text);
+            };
+        }
+
+        function sendMessage(text) {
+            data = new Transport("MESSAGE", nickname, text, null);
+            console.log(data);
+            ws.send(JSON.stringify(data));
+        };
     };
 
     function renderNotification(text) {
@@ -128,17 +206,17 @@
         messagesDiv.scrollTo(0, messagesDiv.scrollHeight);
     }
 
-    function renderChatters(listOfChatters) {
+    function renderChatters() {
         var list = document.getElementById("chatters-list");
         list.innerHTML = "";
 
-        for (let i = 0; i < listOfChatters.length; i += 1) {
+        chatters.forEach(element => {
             let el = document.createElement('li');
             el.className = 'chatter';
-            el.innerText = listOfChatters[i];
+            el.innerText = element;
             list.append(el);
-        }
-    }
+        });
+    };
 </script>
 
 </html>

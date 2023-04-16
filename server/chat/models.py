@@ -1,43 +1,23 @@
-import json
-from enum import Enum, auto
+from enum import Enum
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 
 class MessageType(str, Enum):
+    CONNECTED = "CONNECTED"
     CONNECT = "CONNECT"
     DISCONNECT = "DISCONNECT"
     MESSAGE = "MESSAGE"
     PICTURE = "PICTURE"
 
 
-class User(BaseModel):
-    client_id: int
-    nickname: str
-
-
 class Transport(BaseModel):
     message_type: MessageType
-    client_id: int
-    nickname: str
-    message: str
-    picture: bytes
+    nickname: str | None = None
+    text: str | None = None
+    picture: bytes | None = None
+    chatters: list[str] | None = None
 
 
 class ConnectionTransport(BaseModel):
     nickname: str
-
-
-if __name__ == "__main__":
-    usr = {
-        "client_id": 1,
-        # "nickname": "Dan",
-        "a": 1
-    }
-    s = json.dumps(usr)
-
-    try:
-        u = User.parse_raw(s)
-        print(u)
-    except ValidationError as err:
-        print(err)
