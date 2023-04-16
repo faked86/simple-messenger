@@ -101,7 +101,7 @@
     });
 
     function main() {
-        var ws = new WebSocket(`ws://localhost:8000/ws`);
+        var ws = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/ws`);
 
         ws.onopen = function (event) {
             data = {
